@@ -1,65 +1,72 @@
 import logo from './logo.svg';
 import './App.css';
-import { RouterProvider } from 'react-router-dom';
-import router from './routers/router';
+import { RouterProvider, useNavigate } from 'react-router-dom';
+import router from './routes/router';
 import { useEffect } from 'react';
 import useAuthStore from './store/useAuthStore';
 
 function App() {
 
-  const{isAuthenticated, member, setMember, setIsAuthenticated} = useAuthStore()
+    const {isAuthenticated, member, setMember, setIsAuthenticated} = useAuthStore()
 
-useEffect(() => {
+    useEffect(() => {
 
-  
-  const initializeAuth = async () => {
-    try{
-    const response = await fetch("http://localhost:10000/api/members/me", {
-      credentials: "include"
-      
-    })
-      if(!response.ok) throw new Error("Access Token Expired")
-        
-        const datas = await response.json()
-        const{success, message, data} = datas
-
-        if(success){
-          console.log(data)
-          setMember(data)
-          setIsAuthenticated(true)
-        }
-    }
+        // 최초 한 번 토큰으로 내 정보를 조회하는 서비스
+         const intializeAuth = async () => {
+            try {
+                const response = await fetch("http://localhost:10000/private/api/members/me", {
+                    credentials: "include"
+                })
     
-    catch(err){
-      // accessToken을 만료
-      try{
-        console.log(err)
-        // 한번 더 refresh 토큰과 accessToken을 백앤드로 보내서 accessToken 재발급
-        
+                if(!response.ok) throw new Error("Access Token Expired")
+                
+                const datas = await response.json()
+                const {success, message, data} = datas
+                if(success){
+                    setMember(data)
+                    setIsAuthenticated(true)
+                }
 
 
+            } catch (err) {
+                // accessToken이 만료
+                try {
+                    // 한번더 refresh 토큰과 accessToken을 백엔드로 보내서 accessToken 재발급
+                    console.log("AccessToken이 만료됨!")
+                    
+                    const response = await fetch("http://localhost:10000/api/auth/refresh", {
+                        method: "POST",
+                        credentials: "include"
+                    })
 
+                    if(!response.ok) throw new Error("refresh Token Expired")
+                    
+                    // 새로운 accessToken으로 재요청
+                    const meReponse = await fetch("http://localhost:10000/private/api/members/me", {
+                        credentials: "include"
+                    })
+                    
+                    if(!meReponse.ok) throw new Error("Access Token Expired")
+                    const datas = await meReponse.json()
+                    const {success, message, data} = datas
+                    if(success){
+                        setMember(data)
+                        setIsAuthenticated(true)
+                    }
 
+                } catch (err) {
+                    setMember(null)
+                    setIsAuthenticated(false)
+                }
+            }
+        }
 
-      }
-      catch(err){
-        // refresh 토큰 만료 -> 재로그인
+        intializeAuth()
+    } , [])
 
-
-
-      }
-    }
-  }
-
-    initializeAuth();
-}, [isAuthenticated])
-
-
-  return (
-
-    <RouterProvider router={router} />
-
-  );
+    return (
+        <RouterProvider router={router} />
+    );
 }
 
 export default App;

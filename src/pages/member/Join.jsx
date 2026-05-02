@@ -5,13 +5,13 @@ import { useNavigate } from 'react-router-dom';
 // 회원가입
 const Join = () => {
 
-  const { 
+    const {
         register, handleSubmit, getValues, 
-                formState: {isSubmitting, isSubmitted, errors}
-        } = useForm({mode:"onChange"});
+        formState: {isSubmitting, isSubmitted, errors}
+    } = useForm({mode:"onChange"});
+
     const emailRegex = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
     const passwordRegex = /^(?=.*\d)(?=.*[a-z])(?=.*[!@#])[\da-zA-Z!@#]{8,}$/;
-
     const navigate = useNavigate();
 
     const join = handleSubmit(async (data) => {
@@ -22,6 +22,7 @@ const Join = () => {
         // 2. 어떤 메서드로 -> POST
         // 3. 데이터를 어디에? -> request body
         // 4. 데이터의 포멧(타입, 양식) ->  
+
         await fetch("http://localhost:10000/api/members/join", {
             method: "POST",
             headers: {
@@ -35,7 +36,7 @@ const Join = () => {
                 console.log(error)
                 throw new Error(error?.message)
             }
-            return res.json()
+            return await res.json()
         })
         .then((res) => {
             // 정상 응답일 때
